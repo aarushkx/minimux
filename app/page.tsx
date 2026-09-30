@@ -41,49 +41,144 @@ export default function HomePage() {
         return () => clearInterval(timer);
     }, [video]);
 
+    // async function start() {
+    //     if (!file) return;
+    //     if (!file.type.startsWith("video/")) {
+    //         setMessage("Please choose a video file.");
+    //         return;
+    //     }
+    //     if (file.size > MAX_MB * 1024 * 1024) {
+    //         setMessage(`File is larger than ${MAX_MB} MB.`);
+    //         return;
+    //     }
+
+    //     setBusy(true);
+    //     setMessage("Creating upload session…");
+
+    //     try {
+    //         setMessage("Uploading to Neon Object Storage…");
+
+    //         const formData = new FormData();
+    //         formData.append("file", file);
+
+    //         const uploadResponse = await fetch("/api/uploads", {
+    //             method: "POST",
+    //             body: formData,
+    //         });
+
+    //         const upload = await uploadResponse.json();
+
+    //         if (!uploadResponse.ok) {
+    //             throw new Error(upload.error || "Failed to upload video");
+    //         }
+
+    //         setMessage("Upload complete. Queuing FFmpeg job…");
+    //         const complete = await fetch(
+    //             `/api/videos/${upload.videoId}/complete`,
+    //             {
+    //                 method: "POST",
+    //             },
+    //         );
+    //         const completed = await complete.json();
+    //         if (!complete.ok)
+    //             throw new Error(completed.error || "Failed to queue job");
+
+    //         setVideo(completed);
+    //         setMessage(
+    //             "Queued. GitHub is starting an ephemeral transcoder runner…",
+    //         );
+    //     } catch (error) {
+    //         setMessage(
+    //             error instanceof Error
+    //                 ? error.message
+    //                 : "Something went wrong.",
+    //         );
+    //     } finally {
+    //         setBusy(false);
+    //     }
+    // }
     async function start() {
         if (!file) return;
+
         if (!file.type.startsWith("video/")) {
             setMessage("Please choose a video file.");
             return;
         }
+
         if (file.size > MAX_MB * 1024 * 1024) {
             setMessage(`File is larger than ${MAX_MB} MB.`);
             return;
         }
 
         setBusy(true);
-        setMessage("Creating upload session…");
 
         try {
-            setMessage("Uploading to Neon Object Storage…");
+            // --------------------------------------------------
+            // 1. Ask Next.js for a presigned upload URL
+            //    IMPORTANT: the video itself is NOT sent here.
+            // --------------------------------------------------
 
-            const formData = new FormData();
-            formData.append("file", file);
+            setMessage("Creating upload session…");
 
-            const uploadResponse = await fetch("/api/uploads", {
+            const create = await fetch("/api/uploads", {
                 method: "POST",
-                body: formData,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type || "video/mp4",
+                    sizeBytes: file.size,
+                }),
             });
 
-            const upload = await uploadResponse.json();
+            const upload = await create.json();
 
-            if (!uploadResponse.ok) {
-                throw new Error(upload.error || "Failed to upload video");
+            if (!create.ok) {
+                throw new Error(upload.error || "Failed to create upload");
             }
 
+            // --------------------------------------------------
+            // 2. Upload the actual video DIRECTLY to Neon
+            // --------------------------------------------------
+
+            setMessage("Uploading directly to Neon Object Storage…");
+
+            const put = await fetch(upload.uploadUrl, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": file.type || "video/mp4",
+                },
+                body: file,
+            });
+
+            if (!put.ok) {
+                throw new Error(
+                    `Neon Object Storage upload failed (${put.status})`,
+                );
+            }
+
+            // --------------------------------------------------
+            // 3. Tell our backend the upload completed
+            // --------------------------------------------------
+
             setMessage("Upload complete. Queuing FFmpeg job…");
+
             const complete = await fetch(
                 `/api/videos/${upload.videoId}/complete`,
                 {
                     method: "POST",
                 },
             );
+
             const completed = await complete.json();
-            if (!complete.ok)
+
+            if (!complete.ok) {
                 throw new Error(completed.error || "Failed to queue job");
+            }
 
             setVideo(completed);
+
             setMessage(
                 "Queued. GitHub is starting an ephemeral transcoder runner…",
             );
