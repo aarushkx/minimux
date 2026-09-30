@@ -24,7 +24,7 @@ export function getServerEnv() {
     githubWorkflowFile: process.env.GITHUB_WORKFLOW_FILE ?? "transcode.yml",
     githubRef: process.env.GITHUB_REF ?? "main",
     githubToken: required("GITHUB_TOKEN"),
-    uploadFunctionUrl: required("NEON_FUNCTION_VIDEOUPLOAD_BASE_URL"),
+    // uploadFunctionUrl: required("NEON_FUNCTION_VIDEOUPLOAD_BASE_URL"),
     maxUploadMb: Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? 500),
   };
 }
