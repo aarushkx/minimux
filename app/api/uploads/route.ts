@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       currentStep: "Waiting for upload",
     });
 
-    const uploadUrl = await createUploadUrl(originalKey, body.contentType);
+    const uploadUrl = `${env.uploadFunctionUrl}?_=${Date.now()}`;
     return NextResponse.json({ videoId, uploadUrl, originalKey });
   } catch (error) {
     console.error(error);

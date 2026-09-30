@@ -51,8 +51,8 @@ Your Node.js worker
 
 ## What this proves
 
-- The browser requests a presigned S3-compatible upload URL from Next.js.
-- The browser uploads the original video directly to **Neon Object Storage**.
+- The browser requests an upload gateway URL from Next.js.
+- The browser uploads the original video directly to a **CORS-enabled Neon Function**, which streams it into Neon Object Storage. This avoids relying on an undocumented bucket CORS configuration for browser `PUT` requests.
 - Neon Object Storage is declared as infrastructure in `neon.ts` and is branch-aware with the Neon database.
 - Neon Object Storage exposes standard AWS S3 APIs, so the project uses `@aws-sdk/client-s3` and presigned URLs instead of a provider-specific media SDK.
 - PostgreSQL metadata lives in Neon.
@@ -79,7 +79,7 @@ Neon
 
 The bucket and database live on the same Neon branch, so a preview/test branch gets its own storage state instead of sharing the production bucket. Neon exposes standard S3 credentials as `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL_S3`, and `AWS_REGION`.
 
-The project uses the raw AWS SDK because Neon explicitly supports S3 clients and presigned URLs; Neon requires path-style addressing, so `forcePathStyle: true` is set in `lib/storage.ts`.
+The project uses the raw AWS SDK because Neon explicitly supports S3 clients and presigned URLs; Neon requires path-style addressing, so `forcePathStyle: true` is set in `lib/storage.ts`. The browser upload path uses a small Neon Function because the storage endpoint does not currently expose a documented bucket-CORS configuration for browser `PUT` preflights.
 
 ## Repository layout
 
@@ -108,6 +108,9 @@ mini-mux-pipeline/
 │   ├── redis.ts
 │   ├── schema.ts
 │   └── storage.ts
+│
+├── functions/
+│   └── upload.ts
 │
 ├── worker/
 │   └── index.ts

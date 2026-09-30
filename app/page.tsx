@@ -67,7 +67,10 @@ export default function HomePage() {
       setMessage("Uploading directly to Neon Object Storage…");
       const put = await fetch(upload.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": file.type || "video/mp4" },
+        headers: {
+          "Content-Type": file.type || "video/mp4",
+          "x-upload-key": upload.originalKey,
+        },
         body: file,
       });
       if (!put.ok) throw new Error(`Neon Object Storage upload failed (${put.status})`);
