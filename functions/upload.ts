@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({ forcePathStyle: true });
-const bucket = "video-media";
+const bucket = "minimux-bucket";
 
 function cors(origin: string | null) {
   const allowed = origin === "http://localhost:3000" || !!origin && origin.startsWith("https://");

@@ -74,7 +74,7 @@ The storage layer is intentionally now part of the Neon backend:
 Neon
 ├── PostgreSQL
 └── Object Storage
-      └── video-media bucket
+      └── minimux-bucket bucket
 ```
 
 The bucket and database live on the same Neon branch, so a preview/test branch gets its own storage state instead of sharing the production bucket. Neon exposes standard S3 credentials as `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL_S3`, and `AWS_REGION`.
@@ -177,7 +177,7 @@ import { defineConfig } from "@neon/config/v1";
 
 export default defineConfig({
   buckets: {
-    "video-media": {
+    "minimux-bucket": {
       access: "private",
     },
   },
@@ -227,7 +227,7 @@ DATABASE_URL=...
 
 UPSTASH_REDIS_URL=rediss://...
 
-STORAGE_BUCKET=video-media
+STORAGE_BUCKET=minimux-bucket
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 AWS_ENDPOINT_URL_S3=...
@@ -392,7 +392,7 @@ When you click **Upload & Process**:
 
 ## 9. Storage layout
 
-Everything stays under one prefix in the `video-media` bucket:
+Everything stays under one prefix in the `minimux-bucket` bucket:
 
 ```text
 videos/
@@ -596,7 +596,7 @@ The free tiers are quotas, not unlimited production capacity.
 
 ```text
 [ ] Neon project created
-[ ] video-media private bucket provisioned with neon deploy
+[ ] minimux-bucket private bucket provisioned with neon deploy
 [ ] neon env pull completed
 [ ] DATABASE_URL works
 [ ] Upstash Redis works
